@@ -75,7 +75,8 @@ public class WorldFillTask implements Runnable
 				sendMessage("You must specify a world!");
 			else
 				sendMessage("World \"" + worldName + "\" not found!");
-			this.stop();
+			//In case world is not loaded yet, do not delete saved progress
+			this.stop(true);
 			return;
 		}
 
@@ -83,7 +84,7 @@ public class WorldFillTask implements Runnable
 		if (this.border == null)
 		{
 			sendMessage("No border found for world \"" + worldName + "\"!");
-			this.stop();
+			this.stop(true);
 			return;
 		}
 
@@ -91,7 +92,7 @@ public class WorldFillTask implements Runnable
 		worldData = WorldFileData.create(world, notifyPlayer);
 		if (worldData == null)
 		{
-			this.stop();
+			this.stop(false);
 			return;
 		}
 
@@ -127,8 +128,8 @@ public class WorldFillTask implements Runnable
 	}
 
 	public void setTaskID(int ID)
-	{	
-		if (ID == -1) this.stop();
+	{
+		if (ID == -1) this.stop(false);
 		this.taskID = ID;
 	}
 
@@ -319,18 +320,20 @@ public class WorldFillTask implements Runnable
 		world.save();
 		Bukkit.getServer().getPluginManager().callEvent(new WorldBorderFillFinishedEvent(world, reportTotal));
 		sendMessage("task successfully completed for world \"" + refWorld() + "\"!");
-		this.stop();
+		this.stop(false);
 	}
 
 	// for cancelling prematurely
-	public void cancel()
+	public void cancel(boolean SaveFill)
 	{
-		this.stop();
+		this.stop(SaveFill);
 	}
 
 	// we're done, whether finished or cancelled
-	private void stop()
+	private void stop(boolean SaveFill)
 	{
+		if (!SaveFill)
+			Config.UnStoreFillTask();
 		if (server == null)
 			return;
 
@@ -392,11 +395,12 @@ public class WorldFillTask implements Runnable
 		reportNum = 0;
 
 		// go ahead and save world to disk every 30 seconds or so by default, just in case; can take a couple of seconds or more, so we don't want to run it too often
-		if (Config.FillAutosaveFrequency() > 0 && lastAutosave + (Config.FillAutosaveFrequency() * 1000) < lastReport)
+		if (Config.FillAutosaveFrequency() > 0 && lastAutosave + (Config.FillAutosaveFrequency() * 1000L) < lastReport)
 		{
 			lastAutosave = lastReport;
 			sendMessage("Saving the world to disk, just to be on the safe side.");
 			world.save();
+			Config.StoreFillTask();
 		}
 	}
 
@@ -432,6 +436,10 @@ public class WorldFillTask implements Runnable
 		this.length = length;
 		this.reportTotal = totalDone;
 		this.continueNotice = true;
+		this.refX = x;
+		this.refZ = z;
+		this.refLength = length;
+		this.refTotal = totalDone;
 	}
 	public int refX()
 	{

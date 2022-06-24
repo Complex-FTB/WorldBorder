@@ -47,8 +47,6 @@ public class Config
 	private static int timerTicks = 4;
 	private static boolean whooshEffect = true;
 	private static boolean portalRedirection = true;
-	private static boolean dynmapEnable = true;
-	private static String dynmapMessage;
 	private static int remountDelayTicks = 0;
 	private static boolean killPlayer = false;
 	private static boolean denyEnderpearl = false;
@@ -72,7 +70,6 @@ public class Config
 		if (logIt)
 			log("Border set. " + BorderDescription(world));
 		save(true);
-		DynMapFeatures.showBorder(world, border);
 	}
 	public static void setBorder(String world, BorderData border)
 	{
@@ -132,7 +129,6 @@ public class Config
 		borders.remove(world);
 		log("Removed border for world \"" + world + "\".");
 		save(true);
-		DynMapFeatures.removeBorder(world);
 	}
 
 	public static void removeAllBorders()
@@ -140,7 +136,6 @@ public class Config
 		borders.clear();
 		log("Removed all borders for all worlds.");
 		save(true);
-		DynMapFeatures.removeAllBorders();
 	}
 
 	public static String BorderDescription(String world)
@@ -205,7 +200,6 @@ public class Config
 		shapeRound = round;
 		log("Set default border shape to " + (ShapeName()) + ".");
 		save(true);
-		DynMapFeatures.showAllBorders();
 	}
 
 	public static boolean ShapeRound()
@@ -380,33 +374,6 @@ public class Config
 		return fillAutosaveFrequency;
 	}
 
-
-	public static void setDynmapBorderEnabled(boolean enable)
-	{
-		dynmapEnable = enable;
-		log("DynMap border display is now " + (enable ? "enabled" : "disabled") + ".");
-		save(true);
-		DynMapFeatures.showAllBorders();
-	}
-
-	public static boolean DynmapBorderEnabled()
-	{
-		return dynmapEnable;
-	}
-
-	public static void setDynmapMessage(String msg)
-	{
-		dynmapMessage = msg;
-		log("DynMap border label is now set to: " + msg);
-		save(true);
-		DynMapFeatures.showAllBorders();
-	}
-
-	public static String DynmapMessage()
-	{
-		return dynmapMessage;
-	}
-
 	public static void setPlayerBypass(UUID player, boolean bypass)
 	{
 		if (bypass)
@@ -472,10 +439,10 @@ public class Config
 		logConfig("Border-checking timed task stopped.");
 	}
 
-	public static void StopFillTask()
+	public static void StopFillTask(boolean SaveFill)
 	{
 		if (fillTask != null && fillTask.valid())
-			fillTask.cancel();
+			fillTask.cancel(SaveFill);
 	}
 
 	public static void StoreFillTask()
@@ -590,8 +557,7 @@ public class Config
 		knockBack = cfg.getDouble("knock-back-dist", 3.0);
 		timerTicks = cfg.getInt("timer-delay-ticks", 5);
 		remountDelayTicks = cfg.getInt("remount-delay-ticks", 0);
-		dynmapEnable = cfg.getBoolean("dynmap-border-enabled", true);
-		dynmapMessage = cfg.getString("dynmap-border-message", "The border of the world.");
+
 		logConfig("Using " + (ShapeName()) + " border, knockback of " + knockBack + " blocks, and timer delay of " + timerTicks + ".");
 		killPlayer = cfg.getBoolean("player-killed-bad-spawn", false);
 		denyEnderpearl = cfg.getBoolean("deny-enderpearl", true);
@@ -663,9 +629,9 @@ public class Config
 		if (storedFillTask != null)
 		{
 			String worldName = storedFillTask.getString("world");
-			int fillDistance = storedFillTask.getInt("fillDistance", 176);
-			int chunksPerRun = storedFillTask.getInt("chunksPerRun", 5);
-			int tickFrequency = storedFillTask.getInt("tickFrequency", 20);
+			int fillDistance = storedFillTask.getInt("fillDistance", 208);
+			int chunksPerRun = storedFillTask.getInt("chunksPerRun", 1);
+			int tickFrequency = storedFillTask.getInt("tickFrequency", 1);
 			int fillX = storedFillTask.getInt("x", 0);
 			int fillZ = storedFillTask.getInt("z", 0);
 			int fillLength = storedFillTask.getInt("length", 0);
@@ -699,8 +665,7 @@ public class Config
 		cfg.set("knock-back-dist", knockBack);
 		cfg.set("timer-delay-ticks", timerTicks);
 		cfg.set("remount-delay-ticks", remountDelayTicks);
-		cfg.set("dynmap-border-enabled", dynmapEnable);
-		cfg.set("dynmap-border-message", dynmapMessage);
+
 		cfg.set("player-killed-bad-spawn", killPlayer);
 		cfg.set("deny-enderpearl", denyEnderpearl);
 		cfg.set("fill-autosave-frequency", fillAutosaveFrequency);

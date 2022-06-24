@@ -34,8 +34,6 @@ public class WorldBorder extends JavaPlugin
 		if (Config.preventMobSpawn())
 			enableMobSpawnListener(true);
 
-		// integrate with DynMap if it's available
-		DynMapFeatures.setup();
 
 		// Well I for one find this info useful, so...
 		Location spawn = getServer().getWorlds().get(0).getSpawnLocation();
@@ -45,10 +43,9 @@ public class WorldBorder extends JavaPlugin
 	@Override
 	public void onDisable()
 	{
-		DynMapFeatures.removeAllBorders();
 		Config.StopBorderTimer();
 		Config.StoreFillTask();
-		Config.StopFillTask();
+		Config.StopFillTask(true);
 	}
 
 	// for other plugins to hook into
