@@ -1,9 +1,14 @@
 package com.wimbli.WorldBorder;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
+import org.bukkit.GameMode;
+import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockDamageEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
@@ -46,7 +51,42 @@ public class WBListener implements Listener
 		if (newLoc != null)
 			event.setTo(newLoc);
 	}
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void onBlockBreak(BlockDamageEvent event)
+	{
+		if (WorldBorder.plugin.getWorldBorder(Bukkit.getServer().getWorlds().get(0).getName()) != null)
+		{
+			Block blockBroken = event.getBlock();
+			BorderData data = Config.Border(event.getPlayer().getWorld().getName());
+			if ((blockBroken.getX() == data.getX() + data.getRadiusX()
+					|| blockBroken.getX() == data.getX() - data.getRadiusX()
+					|| blockBroken.getZ() == data.getZ() + data.getRadiusZ()
+					|| blockBroken.getZ() == data.getZ() - data.getRadiusZ())
+					&& !Config.isPlayerBypassing(event.getPlayer().getUniqueId()))
+			{
+				event.setCancelled(true);
+			}
+		}
+	}
 
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void onBlockPlace(BlockPlaceEvent event)
+	{
+		if (WorldBorder.plugin.getWorldBorder(Bukkit.getServer().getWorlds().get(0).getName()) != null)
+		{
+			Block blockPlaced = event.getBlock();
+			BorderData data = Config.Border(event.getPlayer().getWorld().getName());
+			if ((blockPlaced.getX() == data.getX() + data.getRadiusX()
+					|| blockPlaced.getX() == data.getX() - data.getRadiusX()
+					|| blockPlaced.getZ() == data.getZ() + data.getRadiusZ()
+					|| blockPlaced.getZ() == data.getZ() - data.getRadiusZ())
+					&& event.getPlayer().getGameMode() != GameMode.CREATIVE
+					&& !Config.isPlayerBypassing(event.getPlayer().getUniqueId()))
+			{
+				event.setCancelled(true);
+			}
+		}
+	}
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onChunkLoad(ChunkLoadEvent event)
 	{

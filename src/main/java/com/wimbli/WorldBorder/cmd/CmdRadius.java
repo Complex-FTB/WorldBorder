@@ -84,7 +84,13 @@ public class CmdRadius extends WBCmd
 		}
 
 		Config.setBorder(worldName, radiusX, radiusZ, x, z);
+		params.set(0, Integer.toString(radiusX));
+		params.add(Integer.toString(radiusZ));
+		params.add(Double.toString(x));
+		params.add(Double.toString(z));
 
+		CmdSet set = new CmdSet();
+		set.execute(sender, player, params, worldName);
 		if (player != null)
 			sender.sendMessage("Radius has been set. " + Config.BorderDescription(worldName));
 	}

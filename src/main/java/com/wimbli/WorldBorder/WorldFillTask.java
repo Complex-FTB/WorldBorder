@@ -1,10 +1,8 @@
 package com.wimbli.WorldBorder;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import com.wimbli.WorldBorder.Events.WorldBorderFillProgressEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.entity.Player;
@@ -26,8 +24,8 @@ public class WorldFillTask implements Runnable
 	private transient boolean paused = false;
 	private transient boolean pausedForMemory = false;
 	private transient int taskID = -1;
-	private transient Player notifyPlayer = null;
-	private transient int chunksPerRun = 1;
+	private transient UUID notifyPlayerUUID = null;
+	private transient int chunksPerRun = 3;
 	private transient boolean continueNotice = false;
 	private transient boolean forceLoad = false;
 	
@@ -62,7 +60,7 @@ public class WorldFillTask implements Runnable
 	public WorldFillTask(Server theServer, Player player, String worldName, int fillDistance, int chunksPerRun, int tickFrequency, boolean forceLoad)
 	{
 		this.server = theServer;
-		this.notifyPlayer = player;
+		this.notifyPlayerUUID = player.getUniqueId();
 		this.fillDistance = fillDistance;
 		this.tickFrequency = tickFrequency;
 		this.chunksPerRun = chunksPerRun;
@@ -89,7 +87,7 @@ public class WorldFillTask implements Runnable
 		}
 
 		// load up a new WorldFileData for the world in question, used to scan region files for which chunks are already fully generated and such
-		worldData = WorldFileData.create(world, notifyPlayer);
+		worldData = WorldFileData.create(world, notifyPlayerUUID);
 		if (worldData == null)
 		{
 			this.stop(false);
@@ -148,7 +146,9 @@ public class WorldFillTask implements Runnable
 		{	// if available memory gets too low, we automatically pause, so handle that
 			if (Config.AvailableMemoryTooLow())
 				return;
-
+			{
+				System.gc();
+			}
 			pausedForMemory = false;
 			readyToGo = true;
 			sendMessage("Available memory is sufficient, automatically continuing.");
@@ -175,7 +175,7 @@ public class WorldFillTask implements Runnable
 				reportProgress();
 
 			// if this iteration has been running for 45ms (almost 1 tick) or more, stop to take a breather
-			if (now > loopStartTime + 45)
+			if (now > loopStartTime + 100)
 			{
 				readyToGo = true;
 				return;
@@ -201,19 +201,19 @@ public class WorldFillTask implements Runnable
 			}
 
 			// load the target chunk and generate it if necessary
-			world.loadChunk(x, z, true);
+			generateChunkExceptWrapper(world, x, z, true);
 			worldData.chunkExistsNow(x, z);
 
 			// There need to be enough nearby chunks loaded to make the server populate a chunk with trees, snow, etc.
 			// So, we keep the last few chunks loaded, and need to also temporarily load an extra inside chunk (neighbor closest to center of map)
 			int popX = !isZLeg ? x : (x + (isNeg ? -1 : 1));
 			int popZ = isZLeg ? z : (z + (!isNeg ? -1 : 1));
-			world.loadChunk(popX, popZ, false);
+			generateChunkExceptWrapper(world, popX, popZ, false);
 
 			// make sure the previous chunk in our spiral is loaded as well (might have already existed and been skipped over)
 			if (!storedChunks.contains(lastChunk) && !originalChunks.contains(lastChunk))
 			{
-				world.loadChunk(lastChunk.x, lastChunk.z, false);
+				generateChunkExceptWrapper(world, lastChunk.x, lastChunk.z, false);
 				storedChunks.add(new CoordXZ(lastChunk.x, lastChunk.z));
 			}
 
@@ -390,7 +390,8 @@ public class WorldFillTask implements Runnable
 		lastReport = Config.Now();
 		double perc = getPercentageCompleted();
 		if (perc > 100) perc = 100;
-		sendMessage(reportNum + " more chunks processed (" + (reportTotal + reportNum) + " total, ~" + Config.coord.format(perc) + "%" + ")");
+		Bukkit.getServer().getPluginManager().callEvent(new WorldBorderFillProgressEvent(world, reportTarget, reportTotal, reportNum));
+		Bukkit.broadcastMessage(reportNum + " more chunks processed (" + (reportTotal + reportNum) + " total, ~" + Config.coord.format(perc) + "%" + ")");
 		reportTotal += reportNum;
 		reportNum = 0;
 
@@ -411,9 +412,10 @@ public class WorldFillTask implements Runnable
 		int availMem = Config.AvailableMemory();
 
 		Config.log("[Fill] " + text + " (free mem: " + availMem + " MB)");
+		Player notifyPlayer = Bukkit.getPlayer(notifyPlayerUUID);
+
 		if (notifyPlayer != null)
 			notifyPlayer.sendMessage("[Fill] " + text);
-
 		if (availMem < 200)
 		{	// running low on memory, auto-pause
 			pausedForMemory = true;
@@ -503,5 +505,18 @@ public class WorldFillTask implements Runnable
 	 */
 	public int getChunksTotal() {
 		return reportTarget;
+	}
+	private void generateChunkExceptWrapper(World world, int chunkX, int chunkZ, boolean generate)
+	{
+		try
+		{
+			world.loadChunk(chunkX, chunkZ, generate);
+		}
+		catch(Exception ex)
+		{
+			Config.log("[Fill-HH] Encountered an unexpected exception loading chunk at WORLD " + world.getName() + " CHUNKX " + chunkX + " Z " + chunkZ );
+			Config.log( ex.toString() );
+			ex.printStackTrace();
+		}
 	}
 }

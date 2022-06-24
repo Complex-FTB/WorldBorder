@@ -119,14 +119,14 @@ public class CmdFill extends WBCmd
 			if (player != null)
 				Config.log("Filling out world to border at the command of player \"" + player.getName() + "\".");
 
-			int ticks = 1, repeats = 1;
+			int ticks = 1, repeats = 4;
 			if (fillFrequency > 20)
 				repeats = fillFrequency / 20;
 			else
 				ticks = 20 / fillFrequency;
 
 /*	*/		Config.log("world: " + fillWorld + "  padding: " + fillPadding + "  repeats: " + repeats + "  ticks: " + ticks);			
-			Config.fillTask = new WorldFillTask(Bukkit.getServer(), player, fillWorld, fillPadding, repeats, ticks, fillForceLoad);
+			Config.fillTask = new WorldFillTask(Bukkit.getServer(), player, fillWorld, fillPadding, 8, 2, fillForceLoad);
 			if (Config.fillTask.valid())
 			{
 				int task = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(WorldBorder.plugin, Config.fillTask, ticks, ticks);

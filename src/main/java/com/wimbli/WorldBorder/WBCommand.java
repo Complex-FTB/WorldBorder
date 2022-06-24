@@ -21,7 +21,7 @@ public class WBCommand implements CommandExecutor
 	// map of all sub-commands with the command name (string) for quick reference
 	public Map<String, WBCmd> subCommands = new LinkedHashMap<String, WBCmd>();
 	// ref. list of the commands which can have a world name in front of the command itself (ex. /wb _world_ radius 100)
-	private Set<String> subCommandsWithWorldNames = new LinkedHashSet<String>();
+	private final Set<String> subCommandsWithWorldNames = new LinkedHashSet<String>();
 
 	// constructor
 	public WBCommand ()
@@ -49,8 +49,6 @@ public class WBCommand implements CommandExecutor
 		addCmd(new CmdPreventPlace());	// 1
 		addCmd(new CmdPreventSpawn());	// 1
 		addCmd(new CmdDelay());			// 1
-		addCmd(new CmdDynmap());		// 1
-		addCmd(new CmdDynmapmsg());		// 1
 		addCmd(new CmdRemount());		// 1
 		addCmd(new CmdFillautosave());	// 1
 		addCmd(new CmdPortal());		// 1

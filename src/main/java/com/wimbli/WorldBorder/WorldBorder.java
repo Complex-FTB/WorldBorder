@@ -1,6 +1,7 @@
 package com.wimbli.WorldBorder;
 
 import org.bukkit.Location;
+import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
 
 
@@ -28,7 +29,7 @@ public class WorldBorder extends JavaPlugin
 		// keep an eye on teleports, to redirect them to a spot inside the border if necessary
 		getServer().getPluginManager().registerEvents(new WBListener(), this);
 		
-		if (Config.preventBlockPlace()) 
+		if (Config.preventBlockPlace())
 			enableBlockPlaceListener(true);
 
 		if (Config.preventMobSpawn())
@@ -37,6 +38,8 @@ public class WorldBorder extends JavaPlugin
 
 		// Well I for one find this info useful, so...
 		Location spawn = getServer().getWorlds().get(0).getSpawnLocation();
+
+
 		Config.log("For reference, the main world's spawn location is at X: " + Config.coord.format(spawn.getX()) + " Y: " + Config.coord.format(spawn.getY()) + " Z: " + Config.coord.format(spawn.getZ()));
 	}
 

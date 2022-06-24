@@ -4,7 +4,7 @@ description: Efficient, feature-rich plugin for limiting the size of your worlds
 version: 1.8.5
 main: com.wimbli.WorldBorder.WorldBorder
 softdepend:
-  - dynmap
+  - Multiverse-Core
 commands:
   wborder:
     description: Primary command for WorldBorder.
@@ -49,6 +49,7 @@ permissions:
   worldborder.*:
     description: Grants all WorldBorder permissions
     children:
+      worldborder.autobypass: true
       worldborder.bypass: true
       worldborder.bypasslist: true
       worldborder.clear: true
@@ -81,6 +82,9 @@ permissions:
     default: op
   worldborder.bypasslist:
     description: Can get list of players with border bypass enabled
+    default: op
+  worldborder.autobypass:
+    description: Bypasses borders without needed to enable bypass mode
     default: op
   worldborder.clear:
     description: Can remove any border
